@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>الصفحة الرئيسية</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 50px;
+        background-color: #f4f4f9;
+        color: #333;
+      }
+
+      h1 {
+        font-size: 36px;
+        margin-bottom: 20px;
+      }
+
+      p {
+        font-size: 18px;
+        margin-top: 20px;
+      }
+
+      a {
+        display: inline-block;
+        margin-top: 20px;
+        font-size: 18px;
+        color: #007bff;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>مرحبًا بك في موقعي</h1>
+    <p>هذه هي الصفحة الرئيسية.</p>
+    <p>أنت متواجد حاليًا في: <span id="userCountry">جاري التحميل...</span></p>
+    <a href="admin.html">صفحة الإدارة</a>
+
+    <script>
+      const VISITOR_COUNT_KEY = "home_page_visitor_count";
+      const VISITOR_COUNTRY_KEY = "home_page_visitor_countries";
+      const VISITOR_DETAILS_KEY = "visitor_details";
+
+      let visitStartTime = Date.now();
+
+      // زيادة عدد الزوار وتخزين التفاصيل
+      let visitorCount = parseInt(localStorage.getItem(VISITOR_COUNT_KEY)) || 0;
+      visitorCount++;
+      localStorage.setItem(VISITOR_COUNT_KEY, visitorCount);
+
+      // جلب بيانات الموقع الجغرافي للمستخدم باستخدام Geo.ipify
+      fetch(
+        "https://geo.ipify.org/api/v2/country?apiKey=at_LCOpmtlnaYgIwwMBVDCKhKrsUjm0K"
+      )
+        .then((response) => {
+          if (!response.ok) throw new Error("خطأ أثناء الاتصال بـ API");
+          return response.json();
+        })
+        .then((data) => {
+          const userCountry = data.location.country || "غير معروف";
+          document.getElementById("userCountry").textContent = userCountry;
+
+          let countries =
+            JSON.parse(localStorage.getItem(VISITOR_COUNTRY_KEY)) || [];
+          if (!countries.includes(userCountry)) {
+            countries.push(userCountry);
+            localStorage.setItem(
+              VISITOR_COUNTRY_KEY,
+              JSON.stringify(countries)
+            );
+          }
+
+          window.addEventListener("beforeunload", () => {
+            const visitEndTime = Date.now();
+            const visitDuration = visitEndTime - visitStartTime;
+
+            const visitorDetails =
+              JSON.parse(localStorage.getItem(VISITOR_DETAILS_KEY)) || [];
+            visitorDetails.push({
+              country: userCountry,
+              timestamp: new Date().toISOString(),
+              timeSpent: visitDuration,
+            });
+
+            localStorage.setItem(
+              VISITOR_DETAILS_KEY,
+              JSON.stringify(visitorDetails)
+            );
+          });
+        })
+        .catch((err) => {
+          document.getElementById("userCountry").textContent =
+            "غير قادر على تحديد الدولة";
+          console.error("Error fetching data: ", err);
+        });
+    </script>
+  </body>
+</html>
