@@ -56,8 +56,8 @@
         })
         .catch((error) => console.error("خطأ في جلب الموقع:", error));
 
-      // إرسال البيانات عند إغلاق الصفحة
-      window.addEventListener("beforeunload", () => {
+      // وظيفة تسجيل البيانات
+      function sendVisitData() {
         const visitEndTime = Date.now();
         const visitDuration = visitEndTime - visitStartTime;
 
@@ -68,7 +68,26 @@
         };
 
         navigator.sendBeacon(GOOGLE_SHEET_URL, JSON.stringify(data));
+      }
+
+      // إعادة تعيين وقت البداية عند العودة إلى الصفحة
+      function resetVisitStartTime() {
+        visitStartTime = Date.now();
+      }
+
+      // تسجيل البيانات عند إغلاق الصفحة أو مغادرة التبويبة
+      window.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          sendVisitData();
+        } else if (document.visibilityState === "visible") {
+          resetVisitStartTime();
+        }
       });
+
+      window.addEventListener("pagehide", sendVisitData);
+
+      // إعادة تعيين وقت البداية عند التركيز على الصفحة
+      window.addEventListener("focus", resetVisitStartTime);
     </script>
   </head>
   <body>
